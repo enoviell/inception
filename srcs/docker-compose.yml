@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./requirements/nginx
+    image: my/nginx
+    ports:
+      - '443:443'
+    depends_on:
+      - wordpress
+    networks:
+      - my_network
+    volumes:
+      - wordpress_data:/var/www/html # Same volume as wordpress
+    restart: always
+
+  wordpress:
+    build: ./requirements/wordpress
+    image: my/wordpress
+    expose:
+      - '9000:9000'
+    restart: always
+    depends_on:
+      - mariadb
+    networks:
+      - my_network
+    volumes:
+      - wordpress_data:/var/www/html # Same volume as nginx
+    env_file:
+      - .env
+      
+  mariadb:
+    build: ./requirements/mariadb
+    image: my/mariadb
+    expose:
+      - '3306:3306'
+    networks:
+      - my_network
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    env_file:
+      - .env
+    restart: always
+
+networks:
+  my_network:
+    name: my_network
+    driver: bridge
+
+volumes: 
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/enoviell/data/wordpress_data
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/enoviell/data/mariadb_data
